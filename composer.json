@@ -1,0 +1,20 @@
+{
+    "name": "benq/laravel_http_logger",
+    "type": "library",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Benq\\Logger\\": "src/Logger"
+        }
+    },
+    "config": {
+        "preferred-install": "dist"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Benq\\Logger\\Providers\\LoggerServiceProvider"
+            ]
+        }
+    }
+}
