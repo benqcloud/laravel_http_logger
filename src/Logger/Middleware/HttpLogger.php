@@ -39,6 +39,8 @@ class HttpLogger
     {
         $now = microtime(true);
 
+        $contentType = $response->headers->get('Content-Type');
+
         $log = [
             'method' => $request->method(),
             'path' => $request->path(),
@@ -50,8 +52,8 @@ class HttpLogger
             'request_body' => $this->processContext($request, 'content'),
             'request_headers' => $this->processContext($request, 'headers'),
             'response_status' => $response->getStatusCode(),
-            'response_message' => (!$response->headers->contains('Content-Type', 'text/html')) ? $this->getResponseLimit($response) : null,
-            'response_filtered' => ($response->headers->contains('Content-Type', 'application/json')) ? $this->processContext($response, 'response') : null
+            'response_message' => (strpos($contentType, 'text/html') === false) ? $this->getResponseLimit($response): null ,
+            'response_filtered' => (strpos($contentType, 'application/json') === false) ? null : $this->processContext($response, 'response')
         ];
 
         if ($log['response_status'] < 500) {
