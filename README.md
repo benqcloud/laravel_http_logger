@@ -8,7 +8,7 @@ You can install the package via composer:
 
 ```bash
 composer config secure-http false
-composer config repositories.laravel_http_logger git http://dcc0server:30000/doc/Laravel_http_logger
+composer config repositories.laravel_http_logger git http://dcc0server.benq.corp.com:30000/doc/Laravel_http_logger
 composer require benq/laravel_http_logger
 ```
 
