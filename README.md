@@ -18,6 +18,17 @@ Optionally you can publish the configfile with:
 php artisan vendor:publish --provider="Benq\Logger\Providers\LoggerServiceProvider"
 ```
 
+Dockerfile have to adjust these configuration:
+
+```dockerfile
+ARG GITLAB_USERNAME=
+ARG GITLAB_PASSWORD=
+RUN composer config http-basic.dcc0server.benq.corp.com:30000 ${GITLAB_USERNAME} ${GITLAB_PASSWORD} \
+    && composer install --ignore-platform-reqs --no-scripts --prefer-dist \
+    && composer clearcache \
+    && composer config --unset http-basic.dcc0server.benq.corp.com:30000
+```
+
 This is the contents of the published config file:
 
 ```php
