@@ -52,7 +52,7 @@ class HttpLogger
             'request_body' => $this->processContext($request, 'content'),
             'request_headers' => $this->processContext($request, 'headers'),
             'response_status' => $response->getStatusCode(),
-            'response_message' => (strpos($contentType, 'text/html') === false) ? $this->getResponseLimit($response): null ,
+            'response_message' => (strpos($contentType, 'text/html') === false) ? $this->getResponseLimit($response) : null,
             'response_filtered' => (strpos($contentType, 'application/json') === false) ? null : $this->processContext($response, 'response')
         ];
 
@@ -99,7 +99,7 @@ class HttpLogger
      */
     protected function getContent($request): array
     {
-        return $request->getContent() ? json_decode($request->getContent(), true) : [];
+        return $request->all();
     }
 
     /**
