@@ -1,7 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Monolog\Formatter;
+namespace Benq\Logger\Formatter;
 
+use Monolog\Utils;
 use Throwable;
 
 /**
@@ -9,25 +10,37 @@ use Throwable;
  *
  * This can be useful to log to databases or remote APIs
  */
-class JsonFormatter extends NormalizerFormatter
+class JsonFormatter extends \Monolog\Formatter\NormalizerFormatter
 {
     public const BATCH_MODE_JSON = 1;
     public const BATCH_MODE_NEWLINES = 2;
+    public const JSON_FLAGS = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
 
     protected $batchMode;
     protected $appendNewline;
     protected $ignoreEmptyContextAndExtra;
+    protected $maxMessageLength;
 
     /**
      * @var bool
      */
     protected $includeStacktraces = false;
 
-    public function __construct(int $batchMode = self::BATCH_MODE_JSON, bool $appendNewline = true, bool $ignoreEmptyContextAndExtra = false)
+    public function __construct(
+        int $batchMode = self::BATCH_MODE_JSON,
+        bool $appendNewline = true,
+        bool $ignoreEmptyContextAndExtra = false,
+        int $maxNormalizeDepth = 2,
+        int $maxNormalizeItemCount = 20,
+        int $maxMessageLength = 5000
+    )
     {
         $this->batchMode = $batchMode;
         $this->appendNewline = $appendNewline;
         $this->ignoreEmptyContextAndExtra = $ignoreEmptyContextAndExtra;
+        $this->setMaxNormalizeDepth($maxNormalizeDepth);
+        $this->setMaxNormalizeItemCount($maxNormalizeItemCount);
+        $this->maxMessageLength = $maxMessageLength;
     }
 
     /**
@@ -130,17 +143,24 @@ class JsonFormatter extends NormalizerFormatter
      */
     protected function normalize($data, int $depth = 0)
     {
-        if ($depth > $this->maxNormalizeDepth) {
-            return 'Over '.$this->maxNormalizeDepth.' levels deep, aborting normalization';
+        if (is_string($data)) {
+            $length = strlen($data);
+            if ($length > $this->maxMessageLength) {
+                return substr($data, 0, $this->maxMessageLength) . ', Over '.$this->maxMessageLength.' ('.$length.' total), abandon message';
+            }
         }
 
         if (is_array($data)) {
+            if ($depth > $this->maxNormalizeDepth) {
+                return $this->normalize(Utils::jsonEncode($data, Utils::DEFAULT_JSON_FLAGS, true));
+            }
+
             $normalized = [];
 
             $count = 1;
             foreach ($data as $key => $value) {
                 if ($count++ > $this->maxNormalizeItemCount) {
-                    $normalized['...'] = 'Over '.$this->maxNormalizeItemCount.' items ('.count($data).' total), aborting normalization';
+                    $normalized['Over'] = 'Over '.$this->maxNormalizeItemCount.' items ('.count($data).' total), aborting normalization';
                     break;
                 }
 
@@ -150,8 +170,26 @@ class JsonFormatter extends NormalizerFormatter
             return $normalized;
         }
 
-        if ($data instanceof Throwable) {
-            return $this->normalizeException($data, $depth);
+        if (is_object($data)) {
+            if ($data instanceof Throwable) {
+                return $this->normalizeException($data, $depth);
+            }
+
+            if ($data instanceof \JsonSerializable) {
+                $value = $data->jsonSerialize();
+            } elseif (method_exists($data, '__toString')) {
+                $value = $data->__toString();
+            } else {
+                // the rest is normalized by json encoding and decoding it
+                $encoded = $this->toJson($data, true);
+                if ($encoded === false) {
+                    $value = 'JSON_ERROR';
+                } else {
+                    $value = json_decode($encoded, true);
+                }
+            }
+
+            return $this->normalize($value, $depth + 1);
         }
 
         if (is_resource($data)) {
