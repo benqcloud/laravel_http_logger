@@ -83,3 +83,37 @@ return [
 ];
 
 ```
+
+## Formatter
+
+If project have to use custom formatter, you can use Benq\Logger\Formatter\JsonFormatter via config/loggin.php
+
+```php
+return [
+    'channels' => [
+        'stack' => [
+            'driver' => 'stack',
+            'channels' => ['single'],
+            'ignore_exceptions' => false,
+        ],
+
+        'single' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/laravel.log'),
+            'level' => 'debug',
+        ],
+
+        'stdout' => [
+            'driver' => 'monolog',
+            'handler' => StreamHandler::class,
+            'with' => [
+                'stream' => 'php://stdout',
+            ],
+            'formatter' => Benq\Logger\Formatter\JsonFormatter,
+            'formatter_with' => [
+                'setMaxNormalizeDepth' => 2
+            ],
+            'level' => 'debug',
+        ],
+
+```
