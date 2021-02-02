@@ -1,7 +1,6 @@
 {
     "name": "benq/laravel_http_logger",
     "type": "library",
-    "require": {},
     "autoload": {
         "psr-4": {
             "Benq\\Logger\\": "src/Logger"
@@ -9,6 +8,14 @@
     },
     "config": {
         "preferred-install": "dist"
+    },
+    "require-dev": {
+        "monolog/monolog": "^1.1|^2.0",
+        "phpunit/phpunit": "^8.5",
+        "pragmarx/random": "^0.2.2"
+    },
+     "scripts": {
+        "test": "vendor/bin/phpunit"
     },
     "extra": {
         "laravel": {

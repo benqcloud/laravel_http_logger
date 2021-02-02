@@ -33,14 +33,13 @@ class JsonFormatter extends \Monolog\Formatter\NormalizerFormatter
         int $maxNormalizeDepth = 2,
         int $maxNormalizeItemCount = 20,
         int $maxMessageLength = 5000
-    )
-    {
+    ) {
         $this->batchMode = $batchMode;
         $this->appendNewline = $appendNewline;
         $this->ignoreEmptyContextAndExtra = $ignoreEmptyContextAndExtra;
         $this->setMaxNormalizeDepth($maxNormalizeDepth);
         $this->setMaxNormalizeItemCount($maxNormalizeItemCount);
-        $this->maxMessageLength = $maxMessageLength;
+        $this->setMaxMessageLength($maxMessageLength);
     }
 
     /**
@@ -103,6 +102,11 @@ class JsonFormatter extends \Monolog\Formatter\NormalizerFormatter
         }
     }
 
+    public function setMaxMessageLength(int $maxMessageLength)
+    {
+        $this->maxMessageLength = $maxMessageLength;
+    }
+
     public function includeStacktraces(bool $include = true)
     {
         $this->includeStacktraces = $include;
@@ -146,36 +150,14 @@ class JsonFormatter extends \Monolog\Formatter\NormalizerFormatter
         if (is_string($data)) {
             $length = strlen($data);
             if ($length > $this->maxMessageLength) {
-                return substr($data, 0, $this->maxMessageLength) . ', Over '.$this->maxMessageLength.' ('.$length.' total), abandon message';
+                return substr($data, 0, $this->maxMessageLength) . ', Over ' . $this->maxMessageLength . ' (' . $length . ' total), abandon message';
             }
-        }
-
-        if (is_array($data)) {
-            if ($depth > $this->maxNormalizeDepth) {
-                return $this->normalize(Utils::jsonEncode($data, Utils::DEFAULT_JSON_FLAGS, true));
-            }
-
-            $normalized = [];
-
-            $count = 1;
-            foreach ($data as $key => $value) {
-                if ($count++ > $this->maxNormalizeItemCount) {
-                    $normalized['Over'] = 'Over '.$this->maxNormalizeItemCount.' items ('.count($data).' total), aborting normalization';
-                    break;
-                }
-
-                $normalized[$key] = $this->normalize($value, $depth + 1);
-            }
-
-            return $normalized;
         }
 
         if (is_object($data)) {
             if ($data instanceof Throwable) {
-                return $this->normalizeException($data, $depth);
-            }
-
-            if ($data instanceof \JsonSerializable) {
+                $value = $this->normalizeException($data, $depth);
+            } elseif ($data instanceof \JsonSerializable) {
                 $value = $data->jsonSerialize();
             } elseif (method_exists($data, '__toString')) {
                 $value = $data->__toString();
@@ -192,8 +174,28 @@ class JsonFormatter extends \Monolog\Formatter\NormalizerFormatter
             return $this->normalize($value, $depth + 1);
         }
 
+        if (is_array($data)) {
+            if ($depth > $this->maxNormalizeDepth) {
+                return $this->normalize(Utils::jsonEncode($data, Utils::DEFAULT_JSON_FLAGS, true));
+            }
+
+            $normalized = [];
+
+            $count = 1;
+            foreach ($data as $key => $value) {
+                if ($count++ > $this->maxNormalizeItemCount) {
+                    $normalized['Over'] = 'Over ' . $this->maxNormalizeItemCount . ' items (' . count($data) . ' total), aborting normalization';
+                    break;
+                }
+
+                $normalized[$key] = $this->normalize($value, $depth + 1);
+            }
+
+            return $normalized;
+        }
+
         if (is_resource($data)) {
-            return parent::normalize($data);
+            return parent::normalize($data, $depth);
         }
 
         return $data;
