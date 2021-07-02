@@ -1,6 +1,18 @@
 {
     "name": "benq/laravel_http_logger",
     "type": "library",
+    "description": "Laravel HTTP logging library",
+    "keywords": ["laravel", "http", "log", "json"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Tony H Huang",
+            "email": "Tony.H.Huang@BenQ.com"
+        }
+    ],
+    "require": {
+        "php": "^7.1"
+    },
     "autoload": {
         "psr-4": {
             "Benq\\Logger\\": "src/Logger"

@@ -7,26 +7,13 @@ This package provides a middleware to log incoming http requests data (body data
 You can install the package via composer:
 
 ```bash
-composer config secure-http false
-composer config repositories.laravel_http_logger git http://dcc0server.benq.corp.com:30000/doc/Laravel_http_logger
 composer require benq/laravel_http_logger
 ```
 
-Optionally you can publish the configfile with:
+Optionally you can publish the config file with:
 
 ```bash
 php artisan vendor:publish --provider="Benq\Logger\Providers\LoggerServiceProvider"
-```
-
-Dockerfile have to adjust these configuration:
-
-```dockerfile
-ARG GITLAB_USERNAME=
-ARG GITLAB_PASSWORD=
-RUN composer config http-basic.dcc0server.benq.corp.com:30000 ${GITLAB_USERNAME} ${GITLAB_PASSWORD} \
-    && composer install --ignore-platform-reqs --no-scripts --prefer-dist \
-    && composer clearcache \
-    && composer config --unset http-basic.dcc0server.benq.corp.com:30000
 ```
 
 This is the contents of the published config file:
